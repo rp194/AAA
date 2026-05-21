@@ -7,7 +7,7 @@ and a write-behind accounting ledger.
 - RADIUS request handling with tenant-scoped session tracking.
 - Device profile lookup by NAS-IP/NAS-Identifier for vendor selection.
 - Strategy-based vendor mappers (MikroTik and Cisco examples).
-- Redis-style session store with TTL aligned to Interim-Update intervals.
+- In-memory session store with Redis-like TTL semantics aligned to Interim-Update intervals.
 - Asynchronous ledger writer representing PostgreSQL persistence.
 
 ## Build & test

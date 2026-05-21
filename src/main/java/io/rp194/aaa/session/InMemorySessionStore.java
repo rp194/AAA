@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class RedisSessionStore implements SessionStore {
+public final class InMemorySessionStore implements SessionStore {
   private final Map<SessionKey, SessionRecord> sessions = new ConcurrentHashMap<>();
 
   @Override

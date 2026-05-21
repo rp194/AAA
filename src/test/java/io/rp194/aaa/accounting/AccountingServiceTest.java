@@ -2,7 +2,7 @@ package io.rp194.aaa.accounting;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.rp194.aaa.session.RedisSessionStore;
+import io.rp194.aaa.session.InMemorySessionStore;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -12,7 +12,7 @@ class AccountingServiceTest {
   @Test
   void writesLedgerUpdatesAsynchronously() {
     InMemoryAccountingLedgerStore ledgerStore = new InMemoryAccountingLedgerStore();
-    RedisSessionStore sessionStore = new RedisSessionStore();
+    InMemorySessionStore sessionStore = new InMemorySessionStore();
     Clock clock = Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC);
 
     try (AsyncLedgerWriter ledgerWriter = new AsyncLedgerWriter(ledgerStore, 1)) {

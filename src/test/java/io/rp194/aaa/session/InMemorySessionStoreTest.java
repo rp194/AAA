@@ -7,10 +7,10 @@ import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class RedisSessionStoreTest {
+class InMemorySessionStoreTest {
   @Test
   void tracksExpiredSessionsBasedOnInterimInterval() {
-    RedisSessionStore store = new RedisSessionStore();
+    InMemorySessionStore store = new InMemorySessionStore();
     Instant start = Instant.parse("2024-01-01T00:00:00Z");
     SessionRecord record = new SessionRecord(
         "tenant-a",
