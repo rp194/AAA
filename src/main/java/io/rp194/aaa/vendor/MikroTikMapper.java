@@ -7,7 +7,8 @@ import java.util.List;
 
 public final class MikroTikMapper implements VendorMapper {
   @Override
-  public List<RadiusAttribute> mapAttributes(UserProfile profile) {
+  public List<RadiusAttribute> mapAttributes(MapperContext context) {
+    UserProfile profile = context.getProfile();
     List<RadiusAttribute> attributes = new ArrayList<>();
     if (profile.getRateLimit() != null && !profile.getRateLimit().isBlank()) {
       attributes.add(new RadiusAttribute("Mikrotik-Rate-Limit", profile.getRateLimit()));

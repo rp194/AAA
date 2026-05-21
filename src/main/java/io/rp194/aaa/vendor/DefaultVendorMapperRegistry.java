@@ -10,9 +10,22 @@ public final class DefaultVendorMapperRegistry implements VendorMapperRegistry {
   private final VendorMapper fallbackMapper;
 
   public DefaultVendorMapperRegistry(VendorMapper mikroTikMapper, VendorMapper ciscoMapper, VendorMapper fallbackMapper) {
+    this(mikroTikMapper, ciscoMapper, fallbackMapper, null);
+  }
+
+  public DefaultVendorMapperRegistry(VendorMapper mikroTikMapper,
+                                     VendorMapper ciscoMapper,
+                                     VendorMapper fallbackMapper,
+                                     TemplateRepository templateRepository) {
     this.fallbackMapper = Objects.requireNonNull(fallbackMapper, "fallbackMapper");
-    mappers.put(VendorType.MIKROTIK, Objects.requireNonNull(mikroTikMapper, "mikroTikMapper"));
-    mappers.put(VendorType.CISCO, Objects.requireNonNull(ciscoMapper, "ciscoMapper"));
+    VendorMapper mikrotikBase = Objects.requireNonNull(mikroTikMapper, "mikroTikMapper");
+    VendorMapper ciscoBase = Objects.requireNonNull(ciscoMapper, "ciscoMapper");
+    if (templateRepository != null) {
+      mikrotikBase = new TemplateVendorMapper(VendorType.MIKROTIK, templateRepository, mikrotikBase);
+      ciscoBase = new TemplateVendorMapper(VendorType.CISCO, templateRepository, ciscoBase);
+    }
+    mappers.put(VendorType.MIKROTIK, mikrotikBase);
+    mappers.put(VendorType.CISCO, ciscoBase);
     mappers.put(VendorType.GENERIC, fallbackMapper);
   }
 

@@ -13,6 +13,7 @@ import io.rp194.aaa.session.SessionRecord;
 import io.rp194.aaa.session.SessionStore;
 import io.rp194.aaa.vendor.VendorMapper;
 import io.rp194.aaa.vendor.VendorMapperRegistry;
+import io.rp194.aaa.vendor.MapperContext;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -75,14 +76,14 @@ public final class RadiusAccessHandler {
       return reject.get();
     }
 
-    VendorType vendorType = deviceProfileRepository
-        .findByNas(request.getTenantId(), request.getNasIp(), request.getNasIdentifier())
-        .map(DeviceProfile::getVendorType)
-        .orElse(VendorType.GENERIC);
+    Optional<DeviceProfile> deviceProfile = deviceProfileRepository
+        .findByNas(request.getTenantId(), request.getNasIp(), request.getNasIdentifier());
+    VendorType vendorType = deviceProfile.map(DeviceProfile::getVendorType).orElse(VendorType.GENERIC);
 
     VendorMapper mapper = vendorMapperRegistry.mapperFor(vendorType);
-    List<RadiusAttribute> responseAttributes = new ArrayList<>(mapper.mapAttributes(profile.get()));
-
+    Instant now = clock.instant();
+    List<RadiusAttribute> responseAttributes = new ArrayList<>(
+        mapper.mapAttributes(new MapperContext(profile.get(), request, deviceProfile.orElse(null), now)));
     sessionStore.upsert(new SessionRecord(
         request.getTenantId(),
         request.getSessionId(),
