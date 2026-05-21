@@ -1,5 +1,7 @@
 package io.rp194.aaa.accounting;
 
+import io.rp194.aaa.policy.PackageModel;
+import io.rp194.aaa.policy.PolicyService;
 import io.rp194.aaa.session.SessionRecord;
 import io.rp194.aaa.session.SessionStore;
 import java.time.Clock;
@@ -11,11 +13,23 @@ public final class AccountingService {
   private final SessionStore sessionStore;
   private final AsyncLedgerWriter ledgerWriter;
   private final Clock clock;
+  private final PolicyService policyService;
+  private final PackageModel packageModel;
 
   public AccountingService(SessionStore sessionStore, AsyncLedgerWriter ledgerWriter, Clock clock) {
+    this(sessionStore, ledgerWriter, clock, null, null);
+  }
+
+  public AccountingService(SessionStore sessionStore,
+                           AsyncLedgerWriter ledgerWriter,
+                           Clock clock,
+                           PolicyService policyService,
+                           PackageModel packageModel) {
     this.sessionStore = Objects.requireNonNull(sessionStore, "sessionStore");
     this.ledgerWriter = Objects.requireNonNull(ledgerWriter, "ledgerWriter");
     this.clock = Objects.requireNonNull(clock, "clock");
+    this.policyService = policyService;
+    this.packageModel = packageModel;
   }
 
   public void handleInterimUpdate(InterimUpdate update) {
@@ -36,6 +50,11 @@ public final class AccountingService {
             update.getInterimIntervalSeconds()));
 
     sessionStore.upsert(record);
+
+    if (policyService != null && packageModel != null) {
+      policyService.onInterimUpdate(update, packageModel);
+    }
+
     ledgerWriter.enqueue(new AccountingUpdate(
         update.getTenantId(),
         update.getSessionId(),
