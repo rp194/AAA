@@ -40,11 +40,48 @@ class RadiusRequestRouterTest {
     RadiusRequestRouter router = new RadiusRequestRouter(accessHandler, accountingService);
     RadiusPacketCodec codec = new RadiusPacketCodec();
 
-    var decodedAccess = codec.decode("type=access;id=10;tenant=t1;user=u1;session=s1;nasIp=1.1.1.1".getBytes());
+    var decodedAccess = codec.decode(accessPacket());
     assertTrue(router.route(decodedAccess).isPresent());
     assertEquals(10, router.route(decodedAccess).orElseThrow().getIdentifier());
 
-    var decodedAcct = codec.decode("type=acct;id=11;tenant=t1;user=u1;session=s1;nasIp=1.1.1.1;in=10;out=12".getBytes());
+    var decodedAcct = codec.decode(accountingPacket("s1", "10", "12", 11));
     assertTrue(router.route(decodedAcct).isEmpty());
   }
+
+
+  private static byte[] accessPacket() {
+    return radiusPacket(1, 10, new String[][] {
+        {"User-Name", "u1"},
+        {"NAS-IP-Address", "1.1.1.1"},
+        {"Acct-Session-Id", "s1"},
+        {"Attr-250", "t1"}
+    });
+  }
+
+  private static byte[] accountingPacket(String sessionId, String in, String out, int identifier) {
+    return radiusPacket(4, identifier, new String[][] {
+        {"User-Name", "u1"},
+        {"NAS-IP-Address", "1.1.1.1"},
+        {"Acct-Session-Id", sessionId},
+        {"Attr-250", "t1"},
+        {"Acct-Input-Octets", in},
+        {"Acct-Output-Octets", out}
+    });
+  }
+
+  private static byte[] radiusPacket(int code, int identifier, String[][] attrs) {
+    java.util.Map<String, Integer> ids = java.util.Map.of(
+        "User-Name", 1, "NAS-IP-Address", 4, "Acct-Input-Octets", 42, "Acct-Output-Octets", 43,
+        "Acct-Session-Id", 44, "Attr-250", 250);
+    int len = 20;
+    for (String[] a : attrs) len += 2 + a[1].getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+    java.nio.ByteBuffer b = java.nio.ByteBuffer.allocate(len).order(java.nio.ByteOrder.BIG_ENDIAN);
+    b.put((byte) code).put((byte) identifier).putShort((short) len).put(new byte[16]);
+    for (String[] a : attrs) {
+      byte[] v = a[1].getBytes(java.nio.charset.StandardCharsets.UTF_8);
+      b.put((byte) ids.get(a[0])).put((byte) (2 + v.length)).put(v);
+    }
+    return b.array();
+  }
+
 }

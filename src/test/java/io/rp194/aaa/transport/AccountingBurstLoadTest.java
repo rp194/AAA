@@ -31,7 +31,7 @@ class AccountingBurstLoadTest {
     int n = 2000;
     CountDownLatch done = new CountDownLatch(n);
     for (int i = 0; i < n; i++) {
-      byte[] p = ("type=acct;tenant=t1;user=u1;session=s" + i + ";nasIp=1.1.1.1;in=1;out=1").getBytes();
+      byte[] p = accountingPacket("s" + i, "1", "1", i % 255);
       boolean accepted = workers.submit(() -> {
         long st = System.nanoTime();
         router.route(codec.decode(p));
@@ -47,4 +47,41 @@ class AccountingBurstLoadTest {
     workers.shutdown();
     assertTrue(metrics.p99UpperMicros() > 0);
   }
+
+
+  private static byte[] accessPacket() {
+    return radiusPacket(1, 10, new String[][] {
+        {"User-Name", "u1"},
+        {"NAS-IP-Address", "1.1.1.1"},
+        {"Acct-Session-Id", "s1"},
+        {"Attr-250", "t1"}
+    });
+  }
+
+  private static byte[] accountingPacket(String sessionId, String in, String out, int identifier) {
+    return radiusPacket(4, identifier, new String[][] {
+        {"User-Name", "u1"},
+        {"NAS-IP-Address", "1.1.1.1"},
+        {"Acct-Session-Id", sessionId},
+        {"Attr-250", "t1"},
+        {"Acct-Input-Octets", in},
+        {"Acct-Output-Octets", out}
+    });
+  }
+
+  private static byte[] radiusPacket(int code, int identifier, String[][] attrs) {
+    java.util.Map<String, Integer> ids = java.util.Map.of(
+        "User-Name", 1, "NAS-IP-Address", 4, "Acct-Input-Octets", 42, "Acct-Output-Octets", 43,
+        "Acct-Session-Id", 44, "Attr-250", 250);
+    int len = 20;
+    for (String[] a : attrs) len += 2 + a[1].getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+    java.nio.ByteBuffer b = java.nio.ByteBuffer.allocate(len).order(java.nio.ByteOrder.BIG_ENDIAN);
+    b.put((byte) code).put((byte) identifier).putShort((short) len).put(new byte[16]);
+    for (String[] a : attrs) {
+      byte[] v = a[1].getBytes(java.nio.charset.StandardCharsets.UTF_8);
+      b.put((byte) ids.get(a[0])).put((byte) (2 + v.length)).put(v);
+    }
+    return b.array();
+  }
+
 }
