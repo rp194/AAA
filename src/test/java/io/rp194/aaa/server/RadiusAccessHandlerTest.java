@@ -73,7 +73,7 @@ class RadiusAccessHandlerTest {
 
     private TestFixture(AccessPolicy policy) {
       InMemoryUserProfileStore users = new InMemoryUserProfileStore();
-      users.upsert(new UserProfile("tenant-a", "user-a", "", "", "", 0, 1, 1000, 1000, "default"));
+      users.upsert(new UserProfile("tenant-a", "user-a", "", "", "", 0, 10, 1000, 1000, "default"));
       InMemoryDeviceProfileRepository devices = new InMemoryDeviceProfileRepository();
       List<AccessAuditEvent> events = new ArrayList<>();
       handler = new RadiusAccessHandler(
