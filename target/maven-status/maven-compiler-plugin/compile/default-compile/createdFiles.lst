@@ -1,0 +1,6 @@
+io/rp194/aaa/policy/CoaAction.class
+io/rp194/aaa/coa/InMemoryCoaAuditStore.class
+io/rp194/aaa/coa/CoaAuditStore.class
+io/rp194/aaa/coa/CoaResult.class
+io/rp194/aaa/coa/CoaAttemptRecord.class
+io/rp194/aaa/coa/CoaActionType.class
