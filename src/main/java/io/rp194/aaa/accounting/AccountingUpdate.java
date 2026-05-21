@@ -11,6 +11,7 @@ public final class AccountingUpdate {
   private final Instant eventTime;
   private final long inputOctets;
   private final long outputOctets;
+  private final String reasonCode;
 
   public AccountingUpdate(String tenantId,
                           String sessionId,
@@ -19,6 +20,17 @@ public final class AccountingUpdate {
                           Instant eventTime,
                           long inputOctets,
                           long outputOctets) {
+    this(tenantId, sessionId, username, nasIp, eventTime, inputOctets, outputOctets, null);
+  }
+
+  public AccountingUpdate(String tenantId,
+                          String sessionId,
+                          String username,
+                          String nasIp,
+                          Instant eventTime,
+                          long inputOctets,
+                          long outputOctets,
+                          String reasonCode) {
     this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
     this.sessionId = Objects.requireNonNull(sessionId, "sessionId");
     this.username = Objects.requireNonNull(username, "username");
@@ -26,33 +38,15 @@ public final class AccountingUpdate {
     this.eventTime = Objects.requireNonNull(eventTime, "eventTime");
     this.inputOctets = inputOctets;
     this.outputOctets = outputOctets;
+    this.reasonCode = reasonCode;
   }
 
-  public String getTenantId() {
-    return tenantId;
-  }
-
-  public String getSessionId() {
-    return sessionId;
-  }
-
-  public String getUsername() {
-    return username;
-  }
-
-  public String getNasIp() {
-    return nasIp;
-  }
-
-  public Instant getEventTime() {
-    return eventTime;
-  }
-
-  public long getInputOctets() {
-    return inputOctets;
-  }
-
-  public long getOutputOctets() {
-    return outputOctets;
-  }
+  public String getTenantId() { return tenantId; }
+  public String getSessionId() { return sessionId; }
+  public String getUsername() { return username; }
+  public String getNasIp() { return nasIp; }
+  public Instant getEventTime() { return eventTime; }
+  public long getInputOctets() { return inputOctets; }
+  public long getOutputOctets() { return outputOctets; }
+  public String getReasonCode() { return reasonCode; }
 }
