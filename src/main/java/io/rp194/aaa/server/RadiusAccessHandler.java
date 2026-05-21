@@ -81,7 +81,6 @@ public final class RadiusAccessHandler {
     VendorType vendorType = deviceProfile.map(DeviceProfile::getVendorType).orElse(VendorType.GENERIC);
 
     VendorMapper mapper = vendorMapperRegistry.mapperFor(vendorType);
-    Instant now = clock.instant();
     List<RadiusAttribute> responseAttributes = new ArrayList<>(
         mapper.mapAttributes(new MapperContext(profile.get(), request, deviceProfile.orElse(null), now)));
     sessionStore.upsert(new SessionRecord(
@@ -132,11 +131,13 @@ public final class RadiusAccessHandler {
   }
 
   private void pruneStale(List<SessionRecord> sessions, Instant now) {
-    for (SessionRecord session : sessions) {
+    sessions.removeIf(session -> {
       if (session.expiresAt().plusSeconds(accessPolicy.getStaleSessionGraceSeconds()).isBefore(now)) {
         sessionStore.remove(session.getTenantId(), session.getSessionId());
+        return true;
       }
-    }
+      return false;
+    });
   }
 
   private RadiusPacket reject(int identifier,

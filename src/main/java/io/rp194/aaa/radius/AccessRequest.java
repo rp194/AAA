@@ -61,8 +61,8 @@ public final class AccessRequest {
 
   public Optional<String> findAttribute(String name) {
     return attributes.stream()
-        .filter(attribute -> attribute.name().equals(name))
-        .map(RadiusAttribute::value)
+        .filter(attribute -> attribute.getName().equals(name))
+        .map(RadiusAttribute::getValue)
         .findFirst();
   }
 

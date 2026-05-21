@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class MikroTikMapperTest {
   @Test
   void mapsRateLimitAndAddressList() {
-    UserProfile profile = new UserProfile("tenant-a", "user-a", "10M/10M", "premium", null, 0, 0);
+    UserProfile profile = new UserProfile("tenant-a", "user-a", "10M/10M", "premium", null, 0, 0, 1000, 1000, "default");
     MikroTikMapper mapper = new MikroTikMapper();
 
     MapperContext context = new MapperContext(profile, AccessRequest.builder()

@@ -20,7 +20,7 @@ class TemplateVendorMapperTest {
 
     TemplateVendorMapper mapper = new TemplateVendorMapper(VendorType.MIKROTIK, repository, new GenericVendorMapper());
     MapperContext context = new MapperContext(
-        new UserProfile("tenant-a", "user-a", null, null, null, 0, 0),
+        new UserProfile("tenant-a", "user-a", null, null, null, 0, 0, 1000, 1000, "default"),
         AccessRequest.builder().tenantId("tenant-a").username("user-a").sessionId("s1").nasIp("10.0.0.1").nasIdentifier("nas-1")
             .addAttribute(new RadiusAttribute("Package-Name", "premium")).build(),
         new DeviceProfile("tenant-a", "10.0.0.1", "nas-1", VendorType.MIKROTIK, "NAS"),
@@ -34,7 +34,7 @@ class TemplateVendorMapperTest {
   void fallsBackWhenTemplateUnavailable() {
     TemplateVendorMapper mapper = new TemplateVendorMapper(VendorType.CISCO, new InMemoryTemplateRepository(), new CiscoMapper());
     MapperContext context = new MapperContext(
-        new UserProfile("tenant-a", "user-a", null, null, "gold", 0, 0),
+        new UserProfile("tenant-a", "user-a", null, null, "gold", 0, 0, 1000, 1000, "default"),
         AccessRequest.builder().tenantId("tenant-a").username("user-a").sessionId("s1").nasIp("1.1.1.1").build(),
         null,
         Instant.now());

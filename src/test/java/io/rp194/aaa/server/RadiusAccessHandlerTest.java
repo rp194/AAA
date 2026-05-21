@@ -13,6 +13,7 @@ import io.rp194.aaa.session.SessionRecord;
 import io.rp194.aaa.vendor.CiscoMapper;
 import io.rp194.aaa.vendor.DefaultVendorMapperRegistry;
 import io.rp194.aaa.vendor.GenericVendorMapper;
+import io.rp194.aaa.vendor.InMemoryTemplateRepository;
 import io.rp194.aaa.vendor.MikroTikMapper;
 import java.time.Clock;
 import java.time.Instant;
@@ -72,13 +73,13 @@ class RadiusAccessHandlerTest {
 
     private TestFixture(AccessPolicy policy) {
       InMemoryUserProfileStore users = new InMemoryUserProfileStore();
-      users.upsert(new UserProfile("tenant-a", "user-a", "", "", "", 0, 1));
+      users.upsert(new UserProfile("tenant-a", "user-a", "", "", "", 0, 10, 1000, 1000, "default"));
       InMemoryDeviceProfileRepository devices = new InMemoryDeviceProfileRepository();
       List<AccessAuditEvent> events = new ArrayList<>();
       handler = new RadiusAccessHandler(
           devices,
           users,
-          new DefaultVendorMapperRegistry(new MikroTikMapper(), new CiscoMapper(), new GenericVendorMapper()),
+          new DefaultVendorMapperRegistry(new MikroTikMapper(), new CiscoMapper(), new GenericVendorMapper(), new InMemoryTemplateRepository()),
           sessions,
           Clock.fixed(Instant.parse("2026-05-21T00:05:00Z"), ZoneOffset.UTC),
           policy,

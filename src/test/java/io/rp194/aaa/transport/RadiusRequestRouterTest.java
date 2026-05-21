@@ -12,6 +12,8 @@ import io.rp194.aaa.profile.UserProfile;
 import io.rp194.aaa.server.RadiusAccessHandler;
 import io.rp194.aaa.session.InMemorySessionStore;
 import io.rp194.aaa.vendor.DefaultVendorMapperRegistry;
+import io.rp194.aaa.vendor.GenericVendorMapper;
+import io.rp194.aaa.vendor.InMemoryTemplateRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -22,17 +24,17 @@ class RadiusRequestRouterTest {
   @Test
   void routesAccessAndAccountingToServiceBoundary() {
     InMemoryUserProfileStore profiles = new InMemoryUserProfileStore();
-    profiles.save(new UserProfile("t1", "u1", "pw", "10M/10M", "1.1.1.1", "8.8.8.8"));
+    profiles.upsert(new UserProfile("t1", "u1", "pw", "10M/10M", "1.1.1.1", 0, 1, 1000, 1000, "default"));
     RadiusAccessHandler accessHandler = new RadiusAccessHandler(
         new InMemoryDeviceProfileRepository(),
         profiles,
-        new DefaultVendorMapperRegistry(),
+        new DefaultVendorMapperRegistry(new GenericVendorMapper(), new GenericVendorMapper(), new GenericVendorMapper(), new InMemoryTemplateRepository()),
         new InMemorySessionStore(),
         Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC));
 
     AccountingService accountingService = new AccountingService(
         new InMemorySessionStore(),
-        new AsyncLedgerWriter(new InMemoryAccountingLedgerStore()),
+        new AsyncLedgerWriter(new InMemoryAccountingLedgerStore(), 1),
         Clock.systemUTC());
 
     RadiusRequestRouter router = new RadiusRequestRouter(accessHandler, accountingService);
