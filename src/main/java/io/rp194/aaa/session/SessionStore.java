@@ -9,6 +9,10 @@ public interface SessionStore {
 
   Optional<SessionRecord> find(String tenantId, String sessionId);
 
+  List<SessionRecord> findByTenantAndUsername(String tenantId, String username);
+
+  List<SessionRecord> findByTenant(String tenantId);
+
   List<SessionRecord> findExpired(Instant now);
 
   void remove(String tenantId, String sessionId);
