@@ -36,7 +36,7 @@ public final class PostgresUserProfileStore implements UserProfileStore {
         return Optional.empty();
       }
       UserProfileEntity e = result.get(0);
-      return Optional.of(new UserProfile(e.tenantId, e.username, e.bandwidthUpKbps, e.bandwidthDownKbps, e.serviceProfile));
+      return Optional.of(new UserProfile(e.tenantId, e.username, null, null, null, 0, 0, e.bandwidthUpKbps, e.bandwidthDownKbps, e.serviceProfile));
     } finally {
       entityManager.close();
     }

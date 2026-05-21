@@ -3,6 +3,7 @@ package io.rp194.aaa.transport;
 import io.rp194.aaa.accounting.InterimUpdate;
 import io.rp194.aaa.radius.AccessRequest;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,8 +20,8 @@ public final class RadiusPacketCodec {
     if ("acct".equals(type)) {
       InterimUpdate interim = new InterimUpdate(
           kv.get("tenant"), kv.get("session"), kv.get("user"), kv.get("nasIp"), kv.get("mac"),
-          Long.parseLong(kv.getOrDefault("in", "0")), Long.parseLong(kv.getOrDefault("out", "0")),
-          Integer.parseInt(kv.getOrDefault("interim", "300")), null);
+          Instant.now(), Long.parseLong(kv.getOrDefault("in", "0")), Long.parseLong(kv.getOrDefault("out", "0")),
+          Integer.parseInt(kv.getOrDefault("interim", "300")));
       return new Decoded(DecodedType.ACCOUNTING, Integer.parseInt(kv.getOrDefault("id", "0")), null, interim);
     }
 

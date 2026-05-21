@@ -1,6 +1,7 @@
 package io.rp194.aaa.session;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -81,6 +82,52 @@ public final class RedisSessionStore implements SessionStore {
   }
 
   @Override
+  public List<SessionRecord> findByTenantAndUsername(String tenantId, String username) {
+    List<String> matchingKeys = redis.keys("session:" + tenantId + ":*");
+    List<SessionRecord> results = new ArrayList<>();
+    for (String key : matchingKeys) {
+      Map<String, String> values = redis.hgetAll(key);
+      if (!values.isEmpty() && username.equals(values.get("username"))) {
+        results.add(new SessionRecord(
+            values.get("tenantId"),
+            values.get("sessionId"),
+            values.get("username"),
+            values.get("nasIp"),
+            nullable(values.get("macAddress")),
+            Instant.ofEpochSecond(Long.parseLong(values.get("startTime"))),
+            Instant.ofEpochSecond(Long.parseLong(values.get("lastUpdate"))),
+            Long.parseLong(values.get("inputOctets")),
+            Long.parseLong(values.get("outputOctets")),
+            Integer.parseInt(values.get("interimIntervalSeconds"))));
+      }
+    }
+    return results;
+  }
+
+  @Override
+  public List<SessionRecord> findByTenant(String tenantId) {
+    List<String> matchingKeys = redis.keys("session:" + tenantId + ":*");
+    List<SessionRecord> results = new ArrayList<>();
+    for (String key : matchingKeys) {
+      Map<String, String> values = redis.hgetAll(key);
+      if (!values.isEmpty()) {
+        results.add(new SessionRecord(
+            values.get("tenantId"),
+            values.get("sessionId"),
+            values.get("username"),
+            values.get("nasIp"),
+            nullable(values.get("macAddress")),
+            Instant.ofEpochSecond(Long.parseLong(values.get("startTime"))),
+            Instant.ofEpochSecond(Long.parseLong(values.get("lastUpdate"))),
+            Long.parseLong(values.get("inputOctets")),
+            Long.parseLong(values.get("outputOctets")),
+            Integer.parseInt(values.get("interimIntervalSeconds"))));
+      }
+    }
+    return results;
+  }
+
+  @Override
   public void remove(String tenantId, String sessionId) {
     redis.del(key(tenantId, sessionId));
   }
@@ -107,5 +154,7 @@ public final class RedisSessionStore implements SessionStore {
     void del(String key);
 
     Object eval(String luaScript, List<String> keys, List<String> args);
+
+    List<String> keys(String pattern);
   }
 }

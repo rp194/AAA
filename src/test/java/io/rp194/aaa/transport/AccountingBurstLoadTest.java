@@ -10,6 +10,8 @@ import io.rp194.aaa.profile.InMemoryUserProfileStore;
 import io.rp194.aaa.server.RadiusAccessHandler;
 import io.rp194.aaa.session.InMemorySessionStore;
 import io.rp194.aaa.vendor.DefaultVendorMapperRegistry;
+import io.rp194.aaa.vendor.GenericVendorMapper;
+import io.rp194.aaa.vendor.InMemoryTemplateRepository;
 import java.time.Clock;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -20,8 +22,8 @@ class AccountingBurstLoadTest {
   void reportsP95P99DuringAccountingBurst() throws Exception {
     RadiusRequestRouter router = new RadiusRequestRouter(
         new RadiusAccessHandler(new InMemoryDeviceProfileRepository(), new InMemoryUserProfileStore(),
-            new DefaultVendorMapperRegistry(), new InMemorySessionStore(), Clock.systemUTC()),
-        new AccountingService(new InMemorySessionStore(), new AsyncLedgerWriter(new InMemoryAccountingLedgerStore()), Clock.systemUTC()));
+            new DefaultVendorMapperRegistry(new GenericVendorMapper(), new GenericVendorMapper(), new GenericVendorMapper(), new InMemoryTemplateRepository()), new InMemorySessionStore(), Clock.systemUTC()),
+        new AccountingService(new InMemorySessionStore(), new AsyncLedgerWriter(new InMemoryAccountingLedgerStore(), 1), Clock.systemUTC()));
     RadiusPacketCodec codec = new RadiusPacketCodec();
     TransportMetrics metrics = new TransportMetrics();
     WorkerPool workers = new WorkerPool(4, 256, OverloadPolicy.DROP, false);

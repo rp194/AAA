@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,18 @@ class RedisSessionStoreTest {
       this.evalKeys = keys;
       this.evalArgs = args;
       return 1L;
+    }
+
+    @Override
+    public List<String> keys(String pattern) {
+      List<String> result = new ArrayList<>();
+      String regexPattern = pattern.replace("*", ".*");
+      for (String key : hashes.keySet()) {
+        if (key.matches(regexPattern)) {
+          result.add(key);
+        }
+      }
+      return result;
     }
   }
 }

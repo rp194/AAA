@@ -39,7 +39,7 @@ public final class PostgresDeviceProfileRepository implements DeviceProfileRepos
         return Optional.empty();
       }
       DeviceProfileEntity e = result.get(0);
-      return Optional.of(new DeviceProfile(e.tenantId, e.nasIp, e.nasIdentifier, VendorType.valueOf(e.vendorType)));
+      return Optional.of(new DeviceProfile(e.tenantId, e.nasIp, e.nasIdentifier, VendorType.valueOf(e.vendorType), e.displayName));
     } finally {
       entityManager.close();
     }
@@ -77,6 +77,8 @@ public final class PostgresDeviceProfileRepository implements DeviceProfileRepos
     private String nasIdentifier;
     @Column(name = "vendor_type")
     private String vendorType;
+    @Column(name = "display_name")
+    private String displayName;
 
     public static DeviceProfileEntity from(DeviceProfile profile) {
       DeviceProfileEntity entity = new DeviceProfileEntity();
@@ -84,6 +86,7 @@ public final class PostgresDeviceProfileRepository implements DeviceProfileRepos
       entity.nasIp = profile.getNasIp();
       entity.nasIdentifier = profile.getNasIdentifier();
       entity.vendorType = profile.getVendorType().name();
+      entity.displayName = profile.getDisplayName();
       return entity;
     }
   }

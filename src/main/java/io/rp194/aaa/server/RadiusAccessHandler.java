@@ -81,7 +81,6 @@ public final class RadiusAccessHandler {
     VendorType vendorType = deviceProfile.map(DeviceProfile::getVendorType).orElse(VendorType.GENERIC);
 
     VendorMapper mapper = vendorMapperRegistry.mapperFor(vendorType);
-    Instant now = clock.instant();
     List<RadiusAttribute> responseAttributes = new ArrayList<>(
         mapper.mapAttributes(new MapperContext(profile.get(), request, deviceProfile.orElse(null), now)));
     sessionStore.upsert(new SessionRecord(

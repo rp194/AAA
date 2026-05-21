@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class CiscoMapperTest {
   @Test
   void mapsQosPolicy() {
-    UserProfile profile = new UserProfile("tenant-a", "user-a", null, null, "gold", 0, 0);
+    UserProfile profile = new UserProfile("tenant-a", "user-a", null, null, "gold", 0, 0, 1000, 1000, "default");
     CiscoMapper mapper = new CiscoMapper();
 
     MapperContext context = new MapperContext(profile, AccessRequest.builder()
