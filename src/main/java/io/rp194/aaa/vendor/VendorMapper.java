@@ -5,5 +5,5 @@ import io.rp194.aaa.radius.RadiusAttribute;
 import java.util.List;
 
 public interface VendorMapper {
-  List<RadiusAttribute> mapAttributes(UserProfile profile);
+  List<RadiusAttribute> mapAttributes(MapperContext context);
 }

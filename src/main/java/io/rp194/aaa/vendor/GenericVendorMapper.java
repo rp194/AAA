@@ -7,7 +7,7 @@ import java.util.List;
 
 public final class GenericVendorMapper implements VendorMapper {
   @Override
-  public List<RadiusAttribute> mapAttributes(UserProfile profile) {
+  public List<RadiusAttribute> mapAttributes(MapperContext context) {
     return Collections.emptyList();
   }
 }

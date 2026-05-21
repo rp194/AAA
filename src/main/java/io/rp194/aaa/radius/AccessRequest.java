@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class AccessRequest {
   private final String tenantId;
@@ -56,6 +57,13 @@ public final class AccessRequest {
 
   public List<RadiusAttribute> getAttributes() {
     return attributes;
+  }
+
+  public Optional<String> findAttribute(String name) {
+    return attributes.stream()
+        .filter(attribute -> attribute.name().equals(name))
+        .map(RadiusAttribute::value)
+        .findFirst();
   }
 
   public static Builder builder() {
