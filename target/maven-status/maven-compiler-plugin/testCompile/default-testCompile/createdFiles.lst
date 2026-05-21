@@ -1,0 +1,5 @@
+io/rp194/aaa/accounting/AccountingServiceTest.class
+io/rp194/aaa/vendor/CiscoMapperTest.class
+io/rp194/aaa/session/RedisSessionStoreTest.class
+io/rp194/aaa/device/DeviceProfileRepositoryTest.class
+io/rp194/aaa/vendor/MikroTikMapperTest.class

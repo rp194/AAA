@@ -1,0 +1,9 @@
+package io.rp194.aaa.radius;
+
+public enum RadiusCode {
+  ACCESS_REQUEST,
+  ACCESS_ACCEPT,
+  ACCESS_REJECT,
+  ACCOUNTING_REQUEST,
+  ACCOUNTING_RESPONSE
+}
