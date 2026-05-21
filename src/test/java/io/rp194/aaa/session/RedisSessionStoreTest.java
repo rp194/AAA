@@ -29,6 +29,6 @@ class RedisSessionStoreTest {
     List<SessionRecord> expired = store.findExpired(start.plusSeconds(61));
 
     assertEquals(1, expired.size());
-    assertTrue(expired.get(0).getSessionId().equals("session-1"));
+    assertEquals("session-1", expired.get(0).getSessionId());
   }
 }
