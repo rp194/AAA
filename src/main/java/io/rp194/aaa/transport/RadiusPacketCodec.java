@@ -2,12 +2,14 @@ package io.rp194.aaa.transport;
 
 import io.rp194.aaa.accounting.InterimUpdate;
 import io.rp194.aaa.radius.AccessRequest;
+import io.rp194.aaa.radius.RadiusAttribute;
 import io.rp194.aaa.radius.RadiusDictionary;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,6 +35,7 @@ public final class RadiusPacketCodec {
     int identifier = Byte.toUnsignedInt(buffer.get());
     int length = Short.toUnsignedInt(buffer.getShort());
     if (length < HEADER_SIZE || length > payload.length) throw new IllegalArgumentException("invalid radius packet length");
+    if (code != 1 && code != 4) throw new IllegalArgumentException("unsupported radius code");
     buffer.position(HEADER_SIZE);
 
     Map<String, String> attrs = new HashMap<>();
@@ -45,19 +48,30 @@ public final class RadiusPacketCodec {
       decodeAttribute(type, value, attrs);
     }
 
+    String tenant = required(attrs, "tenant");
+    String username = required(attrs, "User-Name");
+    String sessionId = required(attrs, "Acct-Session-Id");
+    String nasIp = required(attrs, "NAS-IP-Address");
+    int interimInterval = parseInt(attrs.getOrDefault("Acct-Interim-Interval", "300"), "Acct-Interim-Interval");
+    List<RadiusAttribute> attributes = attrs.entrySet().stream()
+        .map(entry -> new RadiusAttribute(entry.getKey(), entry.getValue()))
+        .toList();
     if (code == 4) {
+      int delaySeconds = parseInt(attrs.getOrDefault("Acct-Delay-Time", "0"), "Acct-Delay-Time");
+      Instant eventTime = Instant.now().minusSeconds(delaySeconds);
       InterimUpdate interim = new InterimUpdate(
-          attrs.get("tenant"), attrs.get("Acct-Session-Id"), attrs.get("User-Name"), attrs.get("NAS-IP-Address"), attrs.get("Calling-Station-Id"),
-          Instant.now(), Long.parseLong(attrs.getOrDefault("Acct-Input-Octets", "0")), Long.parseLong(attrs.getOrDefault("Acct-Output-Octets", "0")),
-          Integer.parseInt(attrs.getOrDefault("Acct-Interim-Interval", "300")));
+          tenant, sessionId, username, nasIp, attrs.get("Calling-Station-Id"),
+          eventTime, parseLong(attrs.getOrDefault("Acct-Input-Octets", "0"), "Acct-Input-Octets"),
+          parseLong(attrs.getOrDefault("Acct-Output-Octets", "0"), "Acct-Output-Octets"),
+          interimInterval);
       return new Decoded(DecodedType.ACCOUNTING, identifier, null, interim);
     }
 
     AccessRequest access = AccessRequest.builder()
-        .tenantId(attrs.get("tenant")).username(attrs.get("User-Name")).sessionId(attrs.get("Acct-Session-Id"))
-        .nasIp(attrs.getOrDefault("NAS-IP-Address", "0.0.0.0")).nasIdentifier(attrs.get("NAS-Identifier")).macAddress(attrs.get("Calling-Station-Id"))
+        .tenantId(tenant).username(username).sessionId(sessionId)
+        .nasIp(nasIp).nasIdentifier(attrs.get("NAS-Identifier")).macAddress(attrs.get("Calling-Station-Id"))
         .framedIpAddress(attrs.get("Framed-IP-Address")).nasPort(attrs.get("NAS-Port")).nasPortId(attrs.get("NAS-Port-Id"))
-        .interimIntervalSeconds(Integer.parseInt(attrs.getOrDefault("Acct-Interim-Interval", "300"))).build();
+        .interimIntervalSeconds(interimInterval).attributes(attributes).build();
     return new Decoded(DecodedType.ACCESS, identifier, access, null);
   }
 
@@ -82,5 +96,29 @@ public final class RadiusPacketCodec {
 
   private static String decodeValue(byte[] value) {
     return new String(value, StandardCharsets.UTF_8).trim();
+  }
+
+  private static String required(Map<String, String> attrs, String key) {
+    String value = attrs.get(key);
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException("missing required attributes");
+    }
+    return value;
+  }
+
+  private static int parseInt(String value, String field) {
+    try {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException ex) {
+      throw new IllegalArgumentException("invalid numeric attribute: " + field, ex);
+    }
+  }
+
+  private static long parseLong(String value, String field) {
+    try {
+      return Long.parseLong(value);
+    } catch (NumberFormatException ex) {
+      throw new IllegalArgumentException("invalid numeric attribute: " + field, ex);
+    }
   }
 }

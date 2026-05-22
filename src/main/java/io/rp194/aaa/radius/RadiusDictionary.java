@@ -30,7 +30,11 @@ public final class RadiusDictionary {
     standard.put(31, "Calling-Station-Id");
     standard.put(32, "NAS-Identifier");
     standard.put(40, "Acct-Status-Type");
+    standard.put(41, "Acct-Delay-Time");
+    standard.put(42, "Acct-Input-Octets");
+    standard.put(43, "Acct-Output-Octets");
     standard.put(44, "Acct-Session-Id");
+    standard.put(85, "Acct-Interim-Interval");
     standard.put(8, "Framed-IP-Address");
     standard.put(87, "NAS-Port-Id");
 

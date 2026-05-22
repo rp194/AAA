@@ -10,6 +10,7 @@
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/vendor/CiscoMapper.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/pod/RadiusPodService.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/coa/CoaAuditStore.java
+/tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/server/AccessMetrics.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/radius/AccessRequest.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/coa/CiscoEnforcementMapper.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/accounting/NasSessionVerifier.java

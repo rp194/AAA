@@ -35,6 +35,7 @@ public final class RadiusAccessHandler {
   private final AccessPolicy accessPolicy;
   private final AccessAuditLogger auditLogger;
   private final PodService podService;
+  private final AccessMetrics metrics;
 
   public RadiusAccessHandler(DeviceProfileRepository deviceProfileRepository,
                              UserProfileStore userProfileStore,
@@ -42,7 +43,7 @@ public final class RadiusAccessHandler {
                              SessionStore sessionStore,
                              Clock clock) {
     this(deviceProfileRepository, userProfileStore, vendorMapperRegistry, sessionStore, clock,
-        AccessPolicy.defaults(), AccessAuditLogger.NOOP, PodService.NOOP);
+        AccessPolicy.defaults(), AccessAuditLogger.NOOP, PodService.NOOP, AccessMetrics.NOOP);
   }
 
   public RadiusAccessHandler(DeviceProfileRepository deviceProfileRepository,
@@ -52,7 +53,8 @@ public final class RadiusAccessHandler {
                              Clock clock,
                              AccessPolicy accessPolicy,
                              AccessAuditLogger auditLogger,
-                             PodService podService) {
+                             PodService podService,
+                             AccessMetrics metrics) {
     this.deviceProfileRepository = Objects.requireNonNull(deviceProfileRepository, "deviceProfileRepository");
     this.userProfileStore = Objects.requireNonNull(userProfileStore, "userProfileStore");
     this.vendorMapperRegistry = Objects.requireNonNull(vendorMapperRegistry, "vendorMapperRegistry");
@@ -61,14 +63,13 @@ public final class RadiusAccessHandler {
     this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
     this.auditLogger = Objects.requireNonNull(auditLogger, "auditLogger");
     this.podService = Objects.requireNonNull(podService, "podService");
+    this.metrics = Objects.requireNonNull(metrics, "metrics");
   }
 
   public RadiusPacket handleAccessRequest(AccessRequest request, int identifier) {
     Optional<UserProfile> profile = userProfileStore.findProfile(request.getTenantId(), request.getUsername());
     if (profile.isEmpty()) {
-      auditLogger.log(new AccessAuditEvent("ACCESS_REJECT_UNKNOWN_USER", request.getTenantId(), request.getUsername(), Map.of()));
-      return new RadiusPacket(RadiusCode.ACCESS_REJECT, identifier,
-          List.of(new RadiusAttribute("Reply-Message", "Unknown subscriber")));
+      return reject(identifier, request, "Unknown subscriber", "ACCESS_REJECT_UNKNOWN_USER", Map.of());
     }
     Instant now = clock.instant();
 
@@ -106,6 +107,7 @@ public final class RadiusAccessHandler {
 
     auditLogger.log(new AccessAuditEvent("ACCESS_ACCEPT", request.getTenantId(), request.getUsername(),
         Map.of("sessionId", request.getSessionId())));
+    metrics.recordAccept();
 
     return new RadiusPacket(RadiusCode.ACCESS_ACCEPT, identifier, responseAttributes);
   }
@@ -207,6 +209,7 @@ public final class RadiusAccessHandler {
     details.put("sessionId", request.getSessionId());
     details.put("nasIp", request.getNasIp());
     auditLogger.log(new AccessAuditEvent(auditType, request.getTenantId(), request.getUsername(), details));
+    metrics.recordReject();
     return new RadiusPacket(RadiusCode.ACCESS_REJECT, identifier,
         List.of(new RadiusAttribute("Reply-Message", replyMessage)));
   }

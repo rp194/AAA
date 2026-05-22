@@ -18,6 +18,7 @@ io/rp194/aaa/vendor/CiscoMapper.class
 io/rp194/aaa/policy/InMemoryRedisPolicyStateStore.class
 io/rp194/aaa/profile/UserProfileStore.class
 io/rp194/aaa/coa/MikroTikEnforcementMapper.class
+io/rp194/aaa/server/AccessMetrics$1.class
 io/rp194/aaa/vendor/InMemoryTemplateRepository.class
 io/rp194/aaa/pod/PodResult.class
 io/rp194/aaa/device/PostgresDeviceProfileRepository$DeviceProfileId.class
@@ -49,6 +50,7 @@ io/rp194/aaa/session/SessionTtlPolicy.class
 io/rp194/aaa/server/AccessAuditEvent.class
 io/rp194/aaa/session/RedisSessionStore.class
 io/rp194/aaa/accounting/InMemoryAccountingLedgerStore.class
+io/rp194/aaa/server/AccessMetrics.class
 io/rp194/aaa/vendor/TemplateAttribute.class
 io/rp194/aaa/profile/PostgresUserProfileStore$UserProfileEntity.class
 io/rp194/aaa/transport/RadiusPacketCodec$Decoded.class

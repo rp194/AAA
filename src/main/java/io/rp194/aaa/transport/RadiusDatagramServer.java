@@ -17,8 +17,11 @@ import io.rp194.aaa.radius.RadiusPacket;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class RadiusDatagramServer {
+  private static final Logger LOGGER = Logger.getLogger(RadiusDatagramServer.class.getName());
   private final int port;
   private final WorkerPool workers;
   private final OverloadPolicy overloadPolicy;
@@ -55,6 +58,13 @@ public final class RadiusDatagramServer {
     workers.shutdown();
   }
 
+  public int localPort() {
+    if (channel == null) {
+      return port;
+    }
+    return ((InetSocketAddress) channel.localAddress()).getPort();
+  }
+
   private final class Handler extends ChannelInboundHandlerAdapter {
     @Override public void channelRead(ChannelHandlerContext ctx, Object msg) {
       DatagramPacket packet = (DatagramPacket) msg;
@@ -64,11 +74,16 @@ public final class RadiusDatagramServer {
       long started = System.nanoTime();
       metrics.recordQueueDepth(workers.queueDepth(), workers.queueCapacity());
       boolean accepted = workers.submit(() -> {
-        RadiusPacketCodec.Decoded decoded = codec.decode(bytes);
-        Optional<RadiusPacket> response = router.route(decoded);
-        response.ifPresent(r -> ctx.writeAndFlush(new DatagramPacket(
-            Unpooled.copiedBuffer((r.getCode()+":"+r.getIdentifier()).getBytes(StandardCharsets.UTF_8)), remote)));
-        metrics.recordProcessed((System.nanoTime() - started) / 1000);
+        try {
+          RadiusPacketCodec.Decoded decoded = codec.decode(bytes);
+          Optional<RadiusPacket> response = router.route(decoded);
+          response.ifPresent(r -> ctx.writeAndFlush(new DatagramPacket(
+              Unpooled.copiedBuffer((r.getCode()+":"+r.getIdentifier()).getBytes(StandardCharsets.UTF_8)), remote)));
+          metrics.recordProcessed((System.nanoTime() - started) / 1000);
+        } catch (Exception ex) {
+          LOGGER.log(Level.WARNING, "Failed to decode radius packet", ex);
+          metrics.recordDropped();
+        }
       });
       if (!accepted) {
         metrics.recordDropped();

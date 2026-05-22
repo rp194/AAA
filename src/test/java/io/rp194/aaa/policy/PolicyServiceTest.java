@@ -60,6 +60,38 @@ class PolicyServiceTest {
     assertEquals(CoaAction.REDIRECT, eventStore.all().get(0).action());
   }
 
+  @Test
+  void redirectsWhenPackageExpired() {
+    PackageModel pkg = new PackageModel(
+        5_000,
+        PackageModel.ResetCycle.MONTHLY,
+        PackageModel.FupProfile.NONE,
+        Instant.now().minusSeconds(60));
+
+    CoaAction action = service.onInterimUpdate(update(100, 100), pkg);
+
+    assertEquals(CoaAction.REDIRECT, action);
+    assertEquals(1, eventStore.all().size());
+    assertEquals(CoaAction.REDIRECT, eventStore.all().get(0).action());
+  }
+
+  @Test
+  void triggersFupWhenCrossingThreshold() {
+    PackageModel pkg = new PackageModel(
+        1_000,
+        PackageModel.ResetCycle.MONTHLY,
+        PackageModel.FupProfile.THROTTLE,
+        Instant.parse("2099-01-01T00:00:00Z"));
+
+    CoaAction first = service.onInterimUpdate(update(500, 490), pkg);
+    CoaAction second = service.onInterimUpdate(update(510, 510), pkg);
+
+    assertEquals(CoaAction.NONE, first);
+    assertEquals(CoaAction.DOWNGRADE, second);
+    assertEquals(1, eventStore.all().size());
+    assertEquals(CoaAction.DOWNGRADE, eventStore.all().get(0).action());
+  }
+
   private static InterimUpdate update(long input, long output) {
     return new InterimUpdate(
         "tenant-a",

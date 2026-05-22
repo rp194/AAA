@@ -35,6 +35,7 @@ class RadiusAccessHandlerTest {
     RadiusPacket response = fixture.handler.handleAccessRequest(request("tenant-a", "user-a", "new", "roaming-nas", "cc:dd"), 1);
 
     assertEquals(RadiusCode.ACCESS_ACCEPT, response.getCode());
+    assertEquals(1, fixture.metrics.accepts);
   }
 
   @Test
@@ -46,6 +47,7 @@ class RadiusAccessHandlerTest {
 
     assertEquals(RadiusCode.ACCESS_REJECT, response.getCode());
     assertEquals("MAC binding conflict", response.getAttributes().get(0).getValue());
+    assertEquals(1, fixture.metrics.rejects);
   }
 
   @Test
@@ -56,6 +58,7 @@ class RadiusAccessHandlerTest {
     RadiusPacket response = fixture.handler.handleAccessRequest(request("tenant-a", "user-a", "new", "strict-nas", "cc:dd"), 1);
 
     assertEquals(RadiusCode.ACCESS_ACCEPT, response.getCode());
+    assertEquals(1, fixture.metrics.accepts);
   }
 
   @Test
@@ -67,6 +70,7 @@ class RadiusAccessHandlerTest {
 
     assertEquals(RadiusCode.ACCESS_REJECT, response.getCode());
     assertEquals("Max concurrent sessions reached for user", response.getAttributes().get(0).getValue());
+    assertEquals(1, fixture.metrics.rejects);
   }
 
   @Test
@@ -80,6 +84,57 @@ class RadiusAccessHandlerTest {
     assertEquals(RadiusCode.ACCESS_ACCEPT, response.getCode());
     assertEquals(1, podService.actions.size());
     assertEquals("old", podService.actions.get(0).getSessionId());
+    assertEquals(1, fixture.metrics.accepts);
+  }
+
+  @Test
+  void rejectsUnknownUserAcrossTenants() {
+    CountingAccessMetrics metrics = new CountingAccessMetrics();
+    InMemoryUserProfileStore users = new InMemoryUserProfileStore();
+    users.upsert(new UserProfile("tenant-b", "user-b", "", "", "", 0, 1, 1000, 1000, "default"));
+    RadiusAccessHandler handler = new RadiusAccessHandler(
+        new InMemoryDeviceProfileRepository(),
+        users,
+        new DefaultVendorMapperRegistry(new MikroTikMapper(), new CiscoMapper(), new GenericVendorMapper(), new InMemoryTemplateRepository()),
+        new InMemorySessionStore(),
+        Clock.fixed(Instant.parse("2026-05-21T00:05:00Z"), ZoneOffset.UTC),
+        AccessPolicy.defaults(),
+        AccessAuditLogger.NOOP,
+        PodService.NOOP,
+        metrics);
+
+    RadiusPacket response = handler.handleAccessRequest(request("tenant-a", "user-b", "sid-1", "strict-nas", "aa:bb"), 1);
+
+    assertEquals(RadiusCode.ACCESS_REJECT, response.getCode());
+    assertEquals(1, metrics.rejects);
+  }
+
+  @Test
+  void enforcesTenantSessionCaps() {
+    TestFixture fixture = new TestFixture(new AccessPolicy(1, false, Set.of(), 0, AccessPolicy.ConcurrencyPolicy.REJECT));
+    fixture.seedSession("tenant-a", "old-1", "user-a", "aa:bb", "2026-05-21T00:00:00Z", 300);
+    fixture.seedSession("tenant-a", "old-2", "user-b", "cc:dd", "2026-05-21T00:00:00Z", 300);
+
+    RadiusPacket response = fixture.handler.handleAccessRequest(request("tenant-a", "user-a", "new", "strict-nas", "aa:bb"), 1);
+
+    assertEquals(RadiusCode.ACCESS_REJECT, response.getCode());
+    assertEquals("Tenant session limit reached", response.getAttributes().get(0).getValue());
+    assertEquals(1, fixture.metrics.rejects);
+  }
+
+  @Test
+  void podSelectsOldestByStartTimeWhenLastUpdateTies() {
+    RecordingPodService podService = new RecordingPodService(PodResult.ACK);
+    TestFixture fixture = new TestFixture(new AccessPolicy(0, true, Set.of(), 0, AccessPolicy.ConcurrencyPolicy.POD_OLDEST), podService, 2);
+    fixture.seedSessionWithTimes("tenant-a", "session-new", "user-a", "aa:bb",
+        Instant.parse("2026-05-21T00:00:10Z"), Instant.parse("2026-05-21T00:05:00Z"), 300);
+    fixture.seedSessionWithTimes("tenant-a", "session-old", "user-a", "aa:bb",
+        Instant.parse("2026-05-21T00:00:00Z"), Instant.parse("2026-05-21T00:05:00Z"), 300);
+
+    RadiusPacket response = fixture.handler.handleAccessRequest(request("tenant-a", "user-a", "new", "strict-nas", "aa:bb"), 1);
+
+    assertEquals(RadiusCode.ACCESS_ACCEPT, response.getCode());
+    assertEquals("session-old", podService.actions.get(0).getSessionId());
   }
 
   private static AccessRequest request(String tenantId, String username, String sessionId, String nasId, String mac) {
@@ -97,6 +152,7 @@ class RadiusAccessHandlerTest {
   private static final class TestFixture {
     private final InMemorySessionStore sessions = new InMemorySessionStore();
     private final RadiusAccessHandler handler;
+    private final CountingAccessMetrics metrics = new CountingAccessMetrics();
 
     private TestFixture(AccessPolicy policy) {
       this(policy, PodService.NOOP, 10);
@@ -115,13 +171,26 @@ class RadiusAccessHandlerTest {
           Clock.fixed(Instant.parse("2026-05-21T00:05:00Z"), ZoneOffset.UTC),
           policy,
           events::add,
-          podService);
+          podService,
+          metrics);
     }
 
     private void seedSession(String tenantId, String sid, String username, String mac, String lastUpdate, int interval) {
       Instant ts = Instant.parse(lastUpdate);
       sessions.upsert(new SessionRecord(tenantId, sid, username, "192.0.2.2", mac, ts, ts, 0L, 0L, interval));
     }
+
+    private void seedSessionWithTimes(String tenantId, String sid, String username, String mac, Instant start, Instant lastUpdate, int interval) {
+      sessions.upsert(new SessionRecord(tenantId, sid, username, "192.0.2.2", mac, start, lastUpdate, 0L, 0L, interval));
+    }
+  }
+
+  private static final class CountingAccessMetrics implements AccessMetrics {
+    private int accepts;
+    private int rejects;
+
+    @Override public void recordAccept() { accepts++; }
+    @Override public void recordReject() { rejects++; }
   }
 
   private static final class RecordingPodService implements PodService {

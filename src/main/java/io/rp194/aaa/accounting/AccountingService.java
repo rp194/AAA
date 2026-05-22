@@ -35,6 +35,9 @@ public final class AccountingService {
   public void handleInterimUpdate(InterimUpdate update) {
     Instant eventTime = update.getEventTime() != null ? update.getEventTime() : clock.instant();
     Optional<SessionRecord> existing = sessionStore.find(update.getTenantId(), update.getSessionId());
+    if (existing.isPresent() && eventTime.isBefore(existing.get().getLastUpdate())) {
+      return;
+    }
     SessionRecord record = existing
         .map(session -> session.withCounters(update.getInputOctets(), update.getOutputOctets(), eventTime))
         .orElseGet(() -> new SessionRecord(
