@@ -18,26 +18,36 @@ public final class RedisSessionStore implements SessionStore {
       """;
 
   private final RedisSessionCommands redis;
+  private final SessionTtlPolicy ttlPolicy;
 
   public RedisSessionStore(RedisSessionCommands redis) {
+    this(redis, SessionTtlPolicy.defaults());
+  }
+
+  public RedisSessionStore(RedisSessionCommands redis, SessionTtlPolicy ttlPolicy) {
     this.redis = Objects.requireNonNull(redis, "redis");
+    this.ttlPolicy = Objects.requireNonNull(ttlPolicy, "ttlPolicy");
   }
 
   @Override
   public void upsert(SessionRecord record) {
     String key = key(record.getTenantId(), record.getSessionId());
     int ttlSeconds = ttlSeconds(record.getInterimIntervalSeconds());
-    redis.hset(key, Map.of(
-        "tenantId", record.getTenantId(),
-        "sessionId", record.getSessionId(),
-        "username", record.getUsername(),
-        "nasIp", record.getNasIp(),
-        "macAddress", record.getMacAddress() == null ? "" : record.getMacAddress(),
-        "startTime", Long.toString(record.getStartTime().getEpochSecond()),
-        "lastUpdate", Long.toString(record.getLastUpdate().getEpochSecond()),
-        "inputOctets", Long.toString(record.getInputOctets()),
-        "outputOctets", Long.toString(record.getOutputOctets()),
-        "interimIntervalSeconds", Integer.toString(record.getInterimIntervalSeconds())));
+    Map<String, String> fields = new java.util.HashMap<>();
+    fields.put("tenantId", record.getTenantId());
+    fields.put("sessionId", record.getSessionId());
+    fields.put("username", record.getUsername());
+    fields.put("nasIp", record.getNasIp());
+    fields.put("framedIpAddress", nullToBlank(record.getFramedIpAddress()));
+    fields.put("nasPort", nullToBlank(record.getNasPort()));
+    fields.put("nasPortId", nullToBlank(record.getNasPortId()));
+    fields.put("macAddress", record.getMacAddress() == null ? "" : record.getMacAddress());
+    fields.put("startTime", Long.toString(record.getStartTime().getEpochSecond()));
+    fields.put("lastUpdate", Long.toString(record.getLastUpdate().getEpochSecond()));
+    fields.put("inputOctets", Long.toString(record.getInputOctets()));
+    fields.put("outputOctets", Long.toString(record.getOutputOctets()));
+    fields.put("interimIntervalSeconds", Integer.toString(record.getInterimIntervalSeconds()));
+    redis.hset(key, fields);
     redis.expire(key, ttlSeconds);
   }
 
@@ -68,6 +78,9 @@ public final class RedisSessionStore implements SessionStore {
         values.get("sessionId"),
         values.get("username"),
         values.get("nasIp"),
+        nullable(values.get("framedIpAddress")),
+        nullable(values.get("nasPort")),
+        nullable(values.get("nasPortId")),
         nullable(values.get("macAddress")),
         Instant.ofEpochSecond(Long.parseLong(values.get("startTime"))),
         Instant.ofEpochSecond(Long.parseLong(values.get("lastUpdate"))),
@@ -93,6 +106,9 @@ public final class RedisSessionStore implements SessionStore {
             values.get("sessionId"),
             values.get("username"),
             values.get("nasIp"),
+            nullable(values.get("framedIpAddress")),
+            nullable(values.get("nasPort")),
+            nullable(values.get("nasPortId")),
             nullable(values.get("macAddress")),
             Instant.ofEpochSecond(Long.parseLong(values.get("startTime"))),
             Instant.ofEpochSecond(Long.parseLong(values.get("lastUpdate"))),
@@ -116,6 +132,9 @@ public final class RedisSessionStore implements SessionStore {
             values.get("sessionId"),
             values.get("username"),
             values.get("nasIp"),
+            nullable(values.get("framedIpAddress")),
+            nullable(values.get("nasPort")),
+            nullable(values.get("nasPortId")),
             nullable(values.get("macAddress")),
             Instant.ofEpochSecond(Long.parseLong(values.get("startTime"))),
             Instant.ofEpochSecond(Long.parseLong(values.get("lastUpdate"))),
@@ -140,8 +159,12 @@ public final class RedisSessionStore implements SessionStore {
     return value == null || value.isBlank() ? null : value;
   }
 
-  private static int ttlSeconds(int interimIntervalSeconds) {
-    return Math.max(interimIntervalSeconds, 1);
+  private static String nullToBlank(String value) {
+    return value == null ? "" : value;
+  }
+
+  private int ttlSeconds(int interimIntervalSeconds) {
+    return ttlPolicy.ttlSeconds(interimIntervalSeconds);
   }
 
   public interface RedisSessionCommands {

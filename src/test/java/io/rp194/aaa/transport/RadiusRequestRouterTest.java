@@ -79,7 +79,7 @@ class RadiusRequestRouterTest {
     b.put((byte) code).put((byte) identifier).putShort((short) len).put(new byte[16]);
     for (String[] a : attrs) {
       byte[] v = a[1].getBytes(java.nio.charset.StandardCharsets.UTF_8);
-      b.put((byte) ids.get(a[0])).put((byte) (2 + v.length)).put(v);
+      b.put(ids.get(a[0]).byteValue()).put((byte) (2 + v.length)).put(v);
     }
     return b.array();
   }

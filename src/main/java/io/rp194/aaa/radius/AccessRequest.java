@@ -12,6 +12,9 @@ public final class AccessRequest {
   private final String sessionId;
   private final String nasIp;
   private final String nasIdentifier;
+  private final String framedIpAddress;
+  private final String nasPort;
+  private final String nasPortId;
   private final String macAddress;
   private final int interimIntervalSeconds;
   private final List<RadiusAttribute> attributes;
@@ -22,6 +25,9 @@ public final class AccessRequest {
     this.sessionId = Objects.requireNonNull(builder.sessionId, "sessionId");
     this.nasIp = Objects.requireNonNull(builder.nasIp, "nasIp");
     this.nasIdentifier = builder.nasIdentifier;
+    this.framedIpAddress = builder.framedIpAddress;
+    this.nasPort = builder.nasPort;
+    this.nasPortId = builder.nasPortId;
     this.macAddress = builder.macAddress;
     this.interimIntervalSeconds = builder.interimIntervalSeconds;
     this.attributes = Collections.unmodifiableList(new ArrayList<>(builder.attributes));
@@ -45,6 +51,18 @@ public final class AccessRequest {
 
   public String getNasIdentifier() {
     return nasIdentifier;
+  }
+
+  public String getFramedIpAddress() {
+    return framedIpAddress;
+  }
+
+  public String getNasPort() {
+    return nasPort;
+  }
+
+  public String getNasPortId() {
+    return nasPortId;
   }
 
   public String getMacAddress() {
@@ -76,6 +94,9 @@ public final class AccessRequest {
     private String sessionId;
     private String nasIp;
     private String nasIdentifier;
+    private String framedIpAddress;
+    private String nasPort;
+    private String nasPortId;
     private String macAddress;
     private int interimIntervalSeconds = 300;
     private List<RadiusAttribute> attributes = new ArrayList<>();
@@ -102,6 +123,21 @@ public final class AccessRequest {
 
     public Builder nasIdentifier(String nasIdentifier) {
       this.nasIdentifier = nasIdentifier;
+      return this;
+    }
+
+    public Builder framedIpAddress(String framedIpAddress) {
+      this.framedIpAddress = framedIpAddress;
+      return this;
+    }
+
+    public Builder nasPort(String nasPort) {
+      this.nasPort = nasPort;
+      return this;
+    }
+
+    public Builder nasPortId(String nasPortId) {
+      this.nasPortId = nasPortId;
       return this;
     }
 

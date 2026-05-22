@@ -4,5 +4,5 @@ import io.rp194.aaa.radius.RadiusAttribute;
 import java.util.List;
 
 public interface VendorEnforcementMapper {
-  List<RadiusAttribute> enforcementAttributes(CoaActionType actionType);
+  List<RadiusAttribute> enforcementAttributes(CoaAction action);
 }

@@ -62,6 +62,7 @@ public final class RadiusDatagramServer {
       packet.content().readBytes(bytes);
       InetSocketAddress remote = packet.sender();
       long started = System.nanoTime();
+      metrics.recordQueueDepth(workers.queueDepth(), workers.queueCapacity());
       boolean accepted = workers.submit(() -> {
         RadiusPacketCodec.Decoded decoded = codec.decode(bytes);
         Optional<RadiusPacket> response = router.route(decoded);

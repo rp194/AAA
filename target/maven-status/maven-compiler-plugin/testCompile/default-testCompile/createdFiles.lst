@@ -1,4 +1,5 @@
 io/rp194/aaa/accounting/StaleSessionReconcilerTest$RecordingMetricsSink.class
+io/rp194/aaa/server/RadiusAccessHandlerTest$RecordingPodService.class
 io/rp194/aaa/session/InMemorySessionStoreTest.class
 io/rp194/aaa/device/DeviceProfileRepositoryTest.class
 io/rp194/aaa/vendor/MikroTikMapperTest.class
@@ -7,7 +8,9 @@ io/rp194/aaa/coa/CoaPacketBuilderTest.class
 io/rp194/aaa/transport/WorkerPoolTest.class
 io/rp194/aaa/transport/AccountingBurstLoadTest.class
 io/rp194/aaa/server/RadiusAccessHandlerTest.class
+io/rp194/aaa/device/PostgresDeviceProfileRepositoryTest$FakeLookup.class
 io/rp194/aaa/transport/RadiusRequestRouterTest.class
+io/rp194/aaa/device/PostgresDeviceProfileRepositoryTest.class
 io/rp194/aaa/policy/PolicyServiceTest.class
 io/rp194/aaa/server/RadiusAccessHandlerTest$TestFixture.class
 io/rp194/aaa/vendor/TemplateValidatorTest.class

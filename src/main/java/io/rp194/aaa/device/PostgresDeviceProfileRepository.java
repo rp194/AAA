@@ -16,37 +16,45 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class PostgresDeviceProfileRepository implements DeviceProfileRepository {
+  interface DeviceProfileLookup {
+    Optional<DeviceProfile> findByNasIdentifier(String tenantId, String nasIdentifier);
+
+    Optional<DeviceProfile> findByNasIp(String tenantId, String nasIp);
+  }
+
   private final EntityManagerFactory entityManagerFactory;
+  private final DeviceProfileLookup lookup;
 
   public PostgresDeviceProfileRepository(EntityManagerFactory entityManagerFactory) {
     this.entityManagerFactory = Objects.requireNonNull(entityManagerFactory, "entityManagerFactory");
+    this.lookup = new JpaDeviceProfileLookup(entityManagerFactory);
+  }
+
+  PostgresDeviceProfileRepository(DeviceProfileLookup lookup) {
+    this.entityManagerFactory = null;
+    this.lookup = Objects.requireNonNull(lookup, "lookup");
   }
 
   @Override
   public Optional<DeviceProfile> findByNas(String tenantId, String nasIp, String nasIdentifier) {
-    EntityManager entityManager = entityManagerFactory.createEntityManager();
-    try {
-      CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-      CriteriaQuery<DeviceProfileEntity> cq = cb.createQuery(DeviceProfileEntity.class);
-      Root<DeviceProfileEntity> root = cq.from(DeviceProfileEntity.class);
-      cq.select(root).where(
-          cb.equal(root.get("tenantId"), tenantId),
-          cb.equal(root.get("nasIp"), nasIp),
-          cb.equal(root.get("nasIdentifier"), nasIdentifier));
-
-      List<DeviceProfileEntity> result = entityManager.createQuery(cq).setMaxResults(1).getResultList();
-      if (result.isEmpty()) {
-        return Optional.empty();
+    Objects.requireNonNull(tenantId, "tenantId");
+    if (nasIdentifier != null && !nasIdentifier.isBlank()) {
+      Optional<DeviceProfile> byIdentifier = lookup.findByNasIdentifier(tenantId, nasIdentifier);
+      if (byIdentifier.isPresent()) {
+        return byIdentifier;
       }
-      DeviceProfileEntity e = result.get(0);
-      return Optional.of(new DeviceProfile(e.tenantId, e.nasIp, e.nasIdentifier, VendorType.valueOf(e.vendorType), e.displayName));
-    } finally {
-      entityManager.close();
     }
+    if (nasIp == null || nasIp.isBlank()) {
+      return Optional.empty();
+    }
+    return lookup.findByNasIp(tenantId, nasIp);
   }
 
   @Override
   public void register(DeviceProfile profile) {
+    if (entityManagerFactory == null) {
+      throw new UnsupportedOperationException("No EntityManagerFactory configured for register()");
+    }
     EntityManager entityManager = entityManagerFactory.createEntityManager();
     try {
       entityManager.getTransaction().begin();
@@ -59,6 +67,53 @@ public final class PostgresDeviceProfileRepository implements DeviceProfileRepos
       throw new IllegalStateException("Failed to register device profile", ex);
     } finally {
       entityManager.close();
+    }
+  }
+
+  private static final class JpaDeviceProfileLookup implements DeviceProfileLookup {
+    private final EntityManagerFactory entityManagerFactory;
+
+    private JpaDeviceProfileLookup(EntityManagerFactory entityManagerFactory) {
+      this.entityManagerFactory = Objects.requireNonNull(entityManagerFactory, "entityManagerFactory");
+    }
+
+    @Override
+    public Optional<DeviceProfile> findByNasIdentifier(String tenantId, String nasIdentifier) {
+      if (nasIdentifier == null || nasIdentifier.isBlank()) {
+        return Optional.empty();
+      }
+      return query(profileRoot -> profileRoot.get("nasIdentifier"), tenantId, nasIdentifier);
+    }
+
+    @Override
+    public Optional<DeviceProfile> findByNasIp(String tenantId, String nasIp) {
+      if (nasIp == null || nasIp.isBlank()) {
+        return Optional.empty();
+      }
+      return query(profileRoot -> profileRoot.get("nasIp"), tenantId, nasIp);
+    }
+
+    private Optional<DeviceProfile> query(java.util.function.Function<Root<DeviceProfileEntity>, jakarta.persistence.criteria.Path<String>> field,
+                                          String tenantId,
+                                          String value) {
+      EntityManager entityManager = entityManagerFactory.createEntityManager();
+      try {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<DeviceProfileEntity> cq = cb.createQuery(DeviceProfileEntity.class);
+        Root<DeviceProfileEntity> root = cq.from(DeviceProfileEntity.class);
+        cq.select(root).where(
+            cb.equal(root.get("tenantId"), tenantId),
+            cb.equal(field.apply(root), value));
+
+        List<DeviceProfileEntity> result = entityManager.createQuery(cq).setMaxResults(1).getResultList();
+        if (result.isEmpty()) {
+          return Optional.empty();
+        }
+        DeviceProfileEntity e = result.get(0);
+        return Optional.of(new DeviceProfile(e.tenantId, e.nasIp, e.nasIdentifier, VendorType.valueOf(e.vendorType), e.displayName));
+      } finally {
+        entityManager.close();
+      }
     }
   }
 

@@ -12,6 +12,7 @@ import io.rp194.aaa.profile.UserProfileStore;
 import io.rp194.aaa.session.InMemorySessionStore;
 import io.rp194.aaa.session.RedisSessionStore;
 import io.rp194.aaa.session.SessionStore;
+import io.rp194.aaa.session.SessionTtlPolicy;
 import jakarta.persistence.EntityManagerFactory;
 import java.util.Objects;
 
@@ -31,6 +32,13 @@ public final class StorageModule {
     return switch (profile) {
       case LOCAL -> new InMemorySessionStore();
       case REDIS_POSTGRES -> new RedisSessionStore(redisCommands);
+    };
+  }
+
+  public SessionStore sessionStore(RedisSessionStore.RedisSessionCommands redisCommands, SessionTtlPolicy ttlPolicy) {
+    return switch (profile) {
+      case LOCAL -> new InMemorySessionStore();
+      case REDIS_POSTGRES -> new RedisSessionStore(redisCommands, ttlPolicy);
     };
   }
 
