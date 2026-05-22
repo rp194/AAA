@@ -6,6 +6,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class TransportMetrics {
   private final AtomicLong processed = new AtomicLong();
   private final AtomicLong dropped = new AtomicLong();
+  private final AtomicLong lastQueueDepth = new AtomicLong();
+  private final AtomicLong lastQueueCapacity = new AtomicLong();
+  private final AtomicLong maxQueueDepth = new AtomicLong();
   private final AtomicLong[] bucketsMicros;
 
   public TransportMetrics() {
@@ -21,8 +24,16 @@ public final class TransportMetrics {
   }
 
   public void recordDropped() { dropped.incrementAndGet(); }
+  public void recordQueueDepth(int depth, int capacity) {
+    lastQueueDepth.set(depth);
+    lastQueueCapacity.set(capacity);
+    maxQueueDepth.accumulateAndGet(depth, Math::max);
+  }
   public long processedCount() { return processed.get(); }
   public long droppedCount() { return dropped.get(); }
+  public long lastQueueDepth() { return lastQueueDepth.get(); }
+  public long lastQueueCapacity() { return lastQueueCapacity.get(); }
+  public long maxQueueDepth() { return maxQueueDepth.get(); }
 
   public long p95UpperMicros() { return percentileUpper(95); }
   public long p99UpperMicros() { return percentileUpper(99); }
@@ -48,6 +59,8 @@ public final class TransportMetrics {
 
   @Override
   public String toString() {
-    return "TransportMetrics{" + "processed=" + processed + ", dropped=" + dropped + ", p95<=" + p95UpperMicros() + "us, p99<=" + p99UpperMicros() + "us}";
+    return "TransportMetrics{" + "processed=" + processed + ", dropped=" + dropped
+        + ", queueDepth=" + lastQueueDepth + "/" + lastQueueCapacity + ", maxQueueDepth=" + maxQueueDepth
+        + ", p95<=" + p95UpperMicros() + "us, p99<=" + p99UpperMicros() + "us}";
   }
 }

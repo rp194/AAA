@@ -22,7 +22,7 @@ class RedisSessionStoreTest {
     store.upsert(record);
 
     assertEquals("session:tenant-a:sess-1", redis.lastExpireKey);
-    assertEquals(60, redis.lastExpireSeconds);
+    assertEquals(150, redis.lastExpireSeconds);
     Optional<SessionRecord> loaded = store.find("tenant-a", "sess-1");
     assertTrue(loaded.isPresent());
     assertEquals(1L, loaded.get().getInputOctets());
@@ -39,7 +39,19 @@ class RedisSessionStoreTest {
     assertEquals("10", redis.evalArgs.get(0));
     assertEquals("20", redis.evalArgs.get(1));
     assertEquals("250", redis.evalArgs.get(2));
-    assertEquals("30", redis.evalArgs.get(3));
+    assertEquals("90", redis.evalArgs.get(3));
+  }
+
+  @Test
+  void appliesCustomTtlPolicyForJitterBuffer() {
+    FakeRedis redis = new FakeRedis();
+    RedisSessionStore store = new RedisSessionStore(redis, new SessionTtlPolicy(3, 20));
+
+    SessionRecord record = new SessionRecord("tenant-a", "sess-2", "bob", "10.0.0.2", "aa:cc",
+        Instant.ofEpochSecond(100), Instant.ofEpochSecond(100), 1, 2, 10);
+    store.upsert(record);
+
+    assertEquals(50, redis.lastExpireSeconds);
   }
 
   private static final class FakeRedis implements RedisSessionStore.RedisSessionCommands {

@@ -56,6 +56,7 @@ public final class RadiusPacketCodec {
     AccessRequest access = AccessRequest.builder()
         .tenantId(attrs.get("tenant")).username(attrs.get("User-Name")).sessionId(attrs.get("Acct-Session-Id"))
         .nasIp(attrs.getOrDefault("NAS-IP-Address", "0.0.0.0")).nasIdentifier(attrs.get("NAS-Identifier")).macAddress(attrs.get("Calling-Station-Id"))
+        .framedIpAddress(attrs.get("Framed-IP-Address")).nasPort(attrs.get("NAS-Port")).nasPortId(attrs.get("NAS-Port-Id"))
         .interimIntervalSeconds(Integer.parseInt(attrs.getOrDefault("Acct-Interim-Interval", "300"))).build();
     return new Decoded(DecodedType.ACCESS, identifier, access, null);
   }

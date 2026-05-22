@@ -19,7 +19,16 @@ public final class CoaPacketBuilder {
     attributes.add(new RadiusAttribute("User-Name", action.getUsername()));
     attributes.add(new RadiusAttribute("Acct-Session-Id", action.getSessionId()));
     attributes.add(new RadiusAttribute("Framed-IP-Address", action.getFramedIpAddress()));
-    attributes.addAll(mapperRegistry.mapperFor(action.getVendorType()).enforcementAttributes(action.getActionType()));
+    addIfPresent(attributes, "NAS-Port", action.getNasPort());
+    addIfPresent(attributes, "NAS-Port-Id", action.getNasPortId());
+    addIfPresent(attributes, "Calling-Station-Id", action.getCallingStationId());
+    attributes.addAll(mapperRegistry.mapperFor(action.getVendorType()).enforcementAttributes(action));
     return new RadiusPacket(RadiusCode.COA_REQUEST, identifier, attributes);
+  }
+
+  private void addIfPresent(List<RadiusAttribute> attributes, String name, String value) {
+    if (value != null && !value.isBlank()) {
+      attributes.add(new RadiusAttribute(name, value));
+    }
   }
 }

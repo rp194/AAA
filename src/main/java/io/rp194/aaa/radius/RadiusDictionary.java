@@ -32,6 +32,7 @@ public final class RadiusDictionary {
     standard.put(40, "Acct-Status-Type");
     standard.put(44, "Acct-Session-Id");
     standard.put(8, "Framed-IP-Address");
+    standard.put(87, "NAS-Port-Id");
 
     Map<Integer, Map<Integer, String>> vsa = new HashMap<>();
     vsa.put(14988, Map.of(8, "Mikrotik-Rate-Limit"));

@@ -32,6 +32,7 @@ class AccountingBurstLoadTest {
     CountDownLatch done = new CountDownLatch(n);
     for (int i = 0; i < n; i++) {
       byte[] p = accountingPacket("s" + i, "1", "1", i % 255);
+      metrics.recordQueueDepth(workers.queueDepth(), workers.queueCapacity());
       boolean accepted = workers.submit(() -> {
         long st = System.nanoTime();
         router.route(codec.decode(p));
@@ -46,6 +47,7 @@ class AccountingBurstLoadTest {
     assertTrue(done.await(10, TimeUnit.SECONDS));
     workers.shutdown();
     assertTrue(metrics.p99UpperMicros() > 0);
+    assertTrue(metrics.lastQueueCapacity() > 0);
   }
 
 
@@ -79,7 +81,7 @@ class AccountingBurstLoadTest {
     b.put((byte) code).put((byte) identifier).putShort((short) len).put(new byte[16]);
     for (String[] a : attrs) {
       byte[] v = a[1].getBytes(java.nio.charset.StandardCharsets.UTF_8);
-      b.put((byte) ids.get(a[0])).put((byte) (2 + v.length)).put(v);
+      b.put(ids.get(a[0]).byteValue()).put((byte) (2 + v.length)).put(v);
     }
     return b.array();
   }

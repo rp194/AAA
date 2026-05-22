@@ -9,6 +9,9 @@ import io.rp194.aaa.radius.AccessRequest;
 import io.rp194.aaa.radius.RadiusAttribute;
 import io.rp194.aaa.radius.RadiusCode;
 import io.rp194.aaa.radius.RadiusPacket;
+import io.rp194.aaa.pod.PodAction;
+import io.rp194.aaa.pod.PodResult;
+import io.rp194.aaa.pod.PodService;
 import io.rp194.aaa.session.SessionRecord;
 import io.rp194.aaa.session.SessionStore;
 import io.rp194.aaa.vendor.VendorMapper;
@@ -31,6 +34,7 @@ public final class RadiusAccessHandler {
   private final Clock clock;
   private final AccessPolicy accessPolicy;
   private final AccessAuditLogger auditLogger;
+  private final PodService podService;
 
   public RadiusAccessHandler(DeviceProfileRepository deviceProfileRepository,
                              UserProfileStore userProfileStore,
@@ -38,7 +42,7 @@ public final class RadiusAccessHandler {
                              SessionStore sessionStore,
                              Clock clock) {
     this(deviceProfileRepository, userProfileStore, vendorMapperRegistry, sessionStore, clock,
-        AccessPolicy.defaults(), AccessAuditLogger.NOOP);
+        AccessPolicy.defaults(), AccessAuditLogger.NOOP, PodService.NOOP);
   }
 
   public RadiusAccessHandler(DeviceProfileRepository deviceProfileRepository,
@@ -47,7 +51,8 @@ public final class RadiusAccessHandler {
                              SessionStore sessionStore,
                              Clock clock,
                              AccessPolicy accessPolicy,
-                             AccessAuditLogger auditLogger) {
+                             AccessAuditLogger auditLogger,
+                             PodService podService) {
     this.deviceProfileRepository = Objects.requireNonNull(deviceProfileRepository, "deviceProfileRepository");
     this.userProfileStore = Objects.requireNonNull(userProfileStore, "userProfileStore");
     this.vendorMapperRegistry = Objects.requireNonNull(vendorMapperRegistry, "vendorMapperRegistry");
@@ -55,6 +60,7 @@ public final class RadiusAccessHandler {
     this.clock = Objects.requireNonNull(clock, "clock");
     this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy");
     this.auditLogger = Objects.requireNonNull(auditLogger, "auditLogger");
+    this.podService = Objects.requireNonNull(podService, "podService");
   }
 
   public RadiusPacket handleAccessRequest(AccessRequest request, int identifier) {
@@ -88,6 +94,9 @@ public final class RadiusAccessHandler {
         request.getSessionId(),
         request.getUsername(),
         request.getNasIp(),
+        request.getFramedIpAddress(),
+        request.getNasPort(),
+        request.getNasPortId(),
         request.getMacAddress(),
         now,
         now,
@@ -120,12 +129,61 @@ public final class RadiusAccessHandler {
     }
 
     if (profile.getMaxConcurrentSessions() > 0 && userSessions.size() >= profile.getMaxConcurrentSessions()) {
-      return Optional.of(reject(identifier, request, "Max concurrent sessions reached for user",
-          "ACCESS_REJECT_USER_CONCURRENCY", Map.of("active", String.valueOf(userSessions.size()))));
+      if (accessPolicy.getConcurrencyPolicy() == AccessPolicy.ConcurrencyPolicy.POD_OLDEST) {
+        Optional<SessionRecord> disconnected = attemptPodDisconnect(request, userSessions);
+        if (disconnected.isPresent()) {
+          userSessions.remove(disconnected.get());
+          if (userSessions.size() >= profile.getMaxConcurrentSessions()) {
+            return Optional.of(reject(identifier, request, "Max concurrent sessions reached for user",
+                "ACCESS_REJECT_USER_CONCURRENCY", Map.of("active", String.valueOf(userSessions.size()))));
+          }
+        } else {
+          return Optional.of(reject(identifier, request, "Max concurrent sessions reached for user",
+              "ACCESS_REJECT_USER_CONCURRENCY", Map.of("active", String.valueOf(userSessions.size()))));
+        }
+      } else {
+        return Optional.of(reject(identifier, request, "Max concurrent sessions reached for user",
+            "ACCESS_REJECT_USER_CONCURRENCY", Map.of("active", String.valueOf(userSessions.size()))));
+      }
     }
     if (accessPolicy.getMaxTenantSessions() > 0 && tenantSessions.size() >= accessPolicy.getMaxTenantSessions()) {
       return Optional.of(reject(identifier, request, "Tenant session limit reached",
           "ACCESS_REJECT_TENANT_CONCURRENCY", Map.of("active", String.valueOf(tenantSessions.size()))));
+    }
+    return Optional.empty();
+  }
+
+  private Optional<SessionRecord> attemptPodDisconnect(AccessRequest request, List<SessionRecord> sessions) {
+    SessionRecord oldest = sessions.stream()
+        .min((left, right) -> {
+          int cmp = left.getLastUpdate().compareTo(right.getLastUpdate());
+          if (cmp != 0) {
+            return cmp;
+          }
+          return left.getStartTime().compareTo(right.getStartTime());
+        })
+        .orElse(null);
+    if (oldest == null) {
+      return Optional.empty();
+    }
+    PodAction action = new PodAction(
+        oldest.getTenantId(),
+        oldest.getUsername(),
+        oldest.getSessionId(),
+        oldest.getFramedIpAddress(),
+        oldest.getNasIp(),
+        oldest.getNasPort(),
+        oldest.getNasPortId(),
+        oldest.getMacAddress());
+    PodResult result = podService.disconnect(action);
+    Map<String, String> details = Map.of(
+        "sessionId", oldest.getSessionId(),
+        "nasIp", oldest.getNasIp(),
+        "result", result.name());
+    auditLogger.log(new AccessAuditEvent("ACCESS_POD_CONCURRENCY", request.getTenantId(), request.getUsername(), details));
+    if (result == PodResult.ACK) {
+      sessionStore.remove(oldest.getTenantId(), oldest.getSessionId());
+      return Optional.of(oldest);
     }
     return Optional.empty();
   }

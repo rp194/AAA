@@ -8,6 +8,7 @@
 /tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/transport/WorkerPoolTest.java
 /tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/transport/RadiusRequestRouterTest.java
 /tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/policy/PolicyServiceTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/device/PostgresDeviceProfileRepositoryTest.java
 /tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/server/RadiusAccessHandlerTest.java
 /tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/vendor/TemplateVendorMapperTest.java
 /tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/transport/AccountingBurstLoadTest.java
