@@ -91,6 +91,7 @@ class RadiusRequestRouterTest {
     }
     assertTrue(done.await(5, TimeUnit.SECONDS));
     executor.shutdownNow();
+    executor.awaitTermination(5, TimeUnit.SECONDS);
 
     assertNotNull(sessions.find("t1", "s1").orElseThrow().getLastUpdate());
   }
