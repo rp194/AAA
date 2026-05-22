@@ -72,6 +72,7 @@
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/vendor/TemplateDefinition.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/transport/WorkerPool.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/transport/TransportMetrics.java
+/tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/radius/RadiusDictionary.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/coa/DefaultVendorEnforcementMapperRegistry.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/server/AccessAuditEvent.java
 /tmp/workspace/rp194/AAA/src/main/java/io/rp194/aaa/profile/PostgresUserProfileStore.java

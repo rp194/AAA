@@ -82,6 +82,7 @@ io/rp194/aaa/policy/PackageModel.class
 io/rp194/aaa/accounting/SessionStaleMetric.class
 io/rp194/aaa/accounting/NasSessionVerifier$VerificationResult.class
 io/rp194/aaa/config/StorageModule$1.class
+io/rp194/aaa/radius/RadiusDictionary.class
 io/rp194/aaa/profile/InMemoryUserProfileStore.class
 io/rp194/aaa/coa/CoaActionType.class
 io/rp194/aaa/coa/CiscoEnforcementMapper$1.class
