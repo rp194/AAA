@@ -97,7 +97,7 @@ class RadiusDatagramServerTest {
     List<DatagramClient> clients = List.of(new DatagramClient(), new DatagramClient());
     try {
       int packets = 20000;
-      long start = System.nanoTime();
+      long startNanos = System.nanoTime();
       for (int i = 0; i < packets; i++) {
         DatagramClient client = clients.get(i % clients.size());
         client.sendQueued(server.localPort(), accountingPacket(i));
@@ -105,7 +105,7 @@ class RadiusDatagramServerTest {
       for (DatagramClient client : clients) {
         client.flush();
       }
-      long elapsedNanos = System.nanoTime() - start;
+      long elapsedNanos = System.nanoTime() - startNanos;
       double rate = packets / (elapsedNanos / 1_000_000_000.0);
 
       Thread.sleep(200);
