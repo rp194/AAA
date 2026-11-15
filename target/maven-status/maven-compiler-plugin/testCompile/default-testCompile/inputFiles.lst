@@ -1,0 +1,17 @@
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/accounting/StaleSessionReconcilerTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/vendor/TemplateValidatorTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/device/DeviceProfileRepositoryTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/session/RedisSessionStoreTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/coa/CoaPacketBuilderTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/accounting/AccountingServiceTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/session/InMemorySessionStoreTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/transport/WorkerPoolTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/transport/RadiusRequestRouterTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/policy/PolicyServiceTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/device/PostgresDeviceProfileRepositoryTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/server/RadiusAccessHandlerTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/vendor/TemplateVendorMapperTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/transport/AccountingBurstLoadTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/coa/CoaServiceTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/vendor/MikroTikMapperTest.java
+/tmp/workspace/rp194/AAA/src/test/java/io/rp194/aaa/vendor/CiscoMapperTest.java
